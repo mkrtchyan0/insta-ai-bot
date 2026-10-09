@@ -1,0 +1,9 @@
+# Գաղտնիքներ - երբեք չտանել GitHub
+.env
+
+# Node-ի աղբը
+node_modules
+npm-debug.log
+
+# Vercel-ի աղբը
+.vercel

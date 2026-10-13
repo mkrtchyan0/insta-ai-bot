@@ -11,7 +11,18 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const body = req.body;
+    // --- ФИКС: парсим тело вручную ---
+    let body = req.body;
+    if (!body || typeof body !== 'object' || !body.object) {
+      try {
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
+      } catch (e) { body = {}; }
+    }
+
+    console.log('IG WEBHOOK BODY:', JSON.stringify(body));
+
     if (body.object === 'instagram') {
       for (const entry of body.entry || []) {
         for (const ev of entry.messaging || []) {
@@ -19,11 +30,10 @@ export default async function handler(req, res) {
             const sender = ev.sender.id;
             const txt = ev.message.text.toLowerCase();
             let reply = 'Բարև! 🤍 ELVORA-ի օգնականն եմ։ Գրեք «գին» 🌸';
-
             if (txt.includes('գին') || txt.includes('արժե') || txt.includes('ինչքան') || txt.includes('price') || txt.includes('цена')) {
               reply = 'ELVORA 🤍\n\n🧼 1 օճառ - 2500դ\n🎁 3 օճառ - 7000դ\n✨ Box - 12000դ\n\nԱռաքում Երևանում 7000դ+ անվճար 🚚';
             }
-
+            console.log('SENDING TO', sender, reply);
             await fetch(`https://graph.instagram.com/v21.0/${IG_ID}/messages`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
